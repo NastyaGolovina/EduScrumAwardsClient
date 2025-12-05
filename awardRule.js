@@ -122,11 +122,11 @@ function addOptions(parentEl, value, text) {
 }
 
 function removeErrorMassage() {
-    nameEl.classList.remove('is-invalid');
-    descriptionEl.classList.remove('is-invalid');
-    pointEl.classList.remove('is-invalid');
-    typeEl.classList.remove('is-invalid');
-    modeEl.classList.remove('is-invalid');
+    awardEl.classList.remove('is-invalid');
+    cpEl.classList.remove('is-invalid');
+    goalsCompletedEl.classList.remove('is-invalid');
+    projectEl.classList.remove('is-invalid');
+    teacherEl.classList.remove('is-invalid');
 }
 
 
@@ -144,27 +144,29 @@ function setErrorMsg(errorMsg) {
 
 
 
-fetch(`http://localhost:8080/awards-rule/all/${awardId.id}`)
-    .then((response) => {
-        return response.json();
 
-    })
-    .then((result) => {
-        console.log(result);
-        let rules = result;
+Promise.all([
+    fetch(`http://localhost:8080/awards-rule/all/${awardId.id}`).then(r => r.json()),
+    fetch("http://localhost:8080/awards/projects/all").then(r => r.json()),
+    fetch("http://localhost:8080/awards/teachers/all").then(r => r.json()),
+    ]).then(([rules, projects,teachers]) => {
+
+        console.log(rules);
+        console.log(projects);
+        console.log(teachers);
 
 
         for(let i = 0 ; i < rules.length ; i++) {
             addElInList(rules[i].ruleId, rules[i].project.projectName, rules[i].teacher.name, i);
         }
 
-        //
-        // for(let j = 0 ; j < permissions.length; j++) {
-        //     addOptions(permissionEl, permissions[j].PermissionID,  permissions[j].PermissionID);
-        // }
-        // for(let k = 0 ; k < loyaltyProgram.length; k++) {
-        //     addOptions(loyaltyEl, loyaltyProgram[k].LoyaltyProgramID,  loyaltyProgram[k].Name);
-        // }
+
+        for(let j = 0 ; j < projects.length; j++) {
+            addOptions(projectEl, projects[j].projectId,  projects[j].projectName);
+        }
+        for(let k = 0 ; k < teachers.length; k++) {
+            addOptions(teacherEl, teachers[k].userId,  teachers[k].name);
+        }
 
 
         if(rules.length > 0) {
@@ -174,122 +176,107 @@ fetch(`http://localhost:8080/awards-rule/all/${awardId.id}`)
 
 
 
-        // createFormBtn.addEventListener('click', event => {
-        //     prevIsCreate = true;
-        //     // removeActiveClass()
-        //     // prevEl = null;
-        //     // removeErrorMassage();
-        //     cleanInputEl();
-        //     activateDeactivatedForm(false);
-        //     removeBtn();
-        //     createBtn('Create');
-        // });
+        createFormBtn.addEventListener('click', event => {
+            prevIsCreate = true;
+            removeErrorMassage();
+            cleanInputEl();
+            activateDeactivatedForm(false);
+            removeBtn();
+            createBtn('Create');
+        });
 
 
-        // updateFormBtn.addEventListener('click', event => {
-        //     removeErrorMassage();
-        //     if(prevEl !== null) {
-        //         activateDeactivatedForm(false);
-        //         pointEl.disabled = true;
-        //         typeEl.disabled = true;
-        //         modeEl.disabled = true;
-        //         // if(permissionEl.value === "CUSTOMER") {
-        //         //     loyaltyEl.disabled = false;
-        //         // }
-        //         removeBtn();
-        //         createBtn('Update');
-        //         if(prevIsCreate) {
-        //             prevIsCreate = false;
-        //             fillForm(prevEl,awards);
-        //             // if(permissionEl.value === "CUSTOMER") {
-        //             //     loyaltyEl.disabled = false;
-        //             // }
-        //         }
-        //     }  else {
-        //         alert("You didn't choose nothing. Choose element ti update");
-        //     }
-        //
-        //
-        // });
+        updateFormBtn.addEventListener('click', event => {
+            removeErrorMassage();
+            if(prevEl !== null) {
+                activateDeactivatedForm(false);
+                teacherEl.disabled = true;
+                projectEl.disabled = true;
+
+                removeBtn();
+                createBtn('Update');
+                if(prevIsCreate) {
+                    prevIsCreate = false;
+                    fillForm(prevEl,rules);
+
+                }
+            }  else {
+                alert("You didn't choose nothing. Choose element ti update");
+            }
+
+
+        });
 
 
 
-        //
-        // deleteFormBtn.addEventListener('click', () => {
-        //     console.log(prevIsCreate);
-        //     if(prevIsCreate) {
-        //         prevIsCreate = false;
-        //         window.location.reload();
-        //     } else {
-        //         console.log(prevIsCreate);
-        //         removeErrorMassage();
-        //         if(prevEl !== null) {
-        //             removeBtn();
-        //             activateDeactivatedForm(true);
-        //             if (confirm("Do you want to delete this user?")) {
-        //                 console.log(prevEl.dataset.AwardId);
-        //                 fetch(`http://localhost:8080/awards/delete/${prevEl.dataset.AwardId}`, {
-        //                     method: "DELETE"
-        //                 })
-        //                     .then(response => response.text())
-        //                     .then(result => {
-        //                         console.log("Server response:", result);
-        //                         if(result.includes("successfully")) {
-        //                             window.location.reload();
-        //                         } else {
-        //                             setErrorMsg(result);
-        //                         }
-        //                     })
-        //                     .catch(err => {
-        //                         console.error("Fetch error:", err);
-        //                         setErrorMsg(err);
-        //                     });
-        //             }
-        //         } else  {
-        //             alert("You didn't choose nothing. Choose element to delete");
-        //         }
-        //     }
-        // });
+
+        deleteFormBtn.addEventListener('click', () => {
+            console.log(prevIsCreate);
+            if(prevIsCreate) {
+                prevIsCreate = false;
+                window.location.reload();
+            } else {
+                console.log(prevIsCreate);
+                removeErrorMassage();
+                if(prevEl !== null) {
+                    removeBtn();
+                    activateDeactivatedForm(true);
+                    if (confirm("Do you want to delete this rule?")) {
+
+                        const params = new URLSearchParams();
+                        params.append("ruleId",  +prevEl.dataset.RuleId);
+                        params.append("awardId", parseInt(awardId.id, 10));
+
+                        fetch("http://localhost:8080/awards-rule/delete", {
+                            method: "DELETE",
+                            body: params,
+                            headers: {
+                                "Content-Type": "application/x-www-form-urlencoded"
+                            }
+                        })
+                            .then(response => response.text())
+                            .then(result => {
+                                console.log("Server response:", result);
+                                if(result.includes("successfully")) {
+                                    window.location.reload();
+                                } else {
+                                    setErrorMsg(result);
+                                }
+                            })
+                            .catch(err => {
+                                console.error("Fetch error:", err);
+                                setErrorMsg(err);
+                            });
+                    }
+                } else  {
+                    alert("You didn't choose nothing. Choose element to delete");
+                }
+            }
+        });
 
 
 
-        //
-        // listEl.addEventListener('click', event => {
-        //     prevIsCreate = false;
-        //     removeErrorMassage();
-        //     activateDeactivatedForm(true);
-        //     removeBtn();
-        //     removeActiveClass();
-        //     let currentEl = event.target;
-        //     while(!currentEl.classList.contains('list-group-item')) {
-        //         currentEl = currentEl.parentNode;
-        //     }
-        //     prevEl = currentEl;
-        //     // console.log(currentEl);
-        //     currentEl.classList.add('active');
-        //     fillForm(currentEl,awards);
-        //
-        // });
+
+        listEl.addEventListener('click', event => {
+            prevIsCreate = false;
+            removeErrorMassage();
+            activateDeactivatedForm(true);
+            removeBtn();
+            removeActiveClass();
+            let currentEl = event.target;
+            while(!currentEl.classList.contains('list-group-item')) {
+                currentEl = currentEl.parentNode;
+            }
+            prevEl = currentEl;
+            // console.log(currentEl);
+            currentEl.classList.add('active');
+            fillForm(currentEl,rules);
+
+        });
 
 
 
-        // awardRulesBtn.addEventListener('click', event => {
-        //     event.preventDefault();
-        //     if(prevEl != null) {
-        //         let award = {};
-        //         award.id = +prevEl.dataset.AwardId
-        //         localStorage.setItem("award", JSON.stringify(award));
-        //         // setTimeout(() => {
-        //         //     // window.location.href = this.href;
-        //         //
-        //         //     //get on award rule page
-        //         //     // const lsObj = localStorage.getItem("award");
-        //         //     // let newObj = JSON.parse(lsObj);
-        //         //     // console.log(newObj);
-        //         // }, 1000);
-        //     }
-        // });
-        //
+
 
 
         //
@@ -311,80 +298,106 @@ fetch(`http://localhost:8080/awards-rule/all/${awardId.id}`)
         //
         //
         //
-        //
-        //
 
 
 
-        // document.addEventListener('click', event => {
-        //     // let loginFlag = true;
-        //     removeErrorMassage();
-        //     if(event.target.id === 'btn-submit') {
-        //         if(event.target.innerText === 'Create' || event.target.innerText === 'Update') {
-        //             event.preventDefault();
-        //             if(event.target.innerText === 'Create') {
-        //                 const points = +pointEl.value;
-        //                 if(Number.isInteger(points)) {
-        //                     const formDataCreate = new FormData();
-        //                     formDataCreate.append("name", nameEl.value);
-        //                     formDataCreate.append("description", descriptionEl.value);
-        //                     formDataCreate.append("points", points);
-        //                     formDataCreate.append("assignType", typeEl.value);
-        //                     formDataCreate.append("assignMode", modeEl.value);
-        //
-        //                     fetch("http://localhost:8080/awards/create", {
-        //                         method: "POST",
-        //                         body: formDataCreate
-        //                     })
-        //                         .then(response => response.text())
-        //                         .then(result => {
-        //                             console.log("Server response:", result);
-        //                             if(result.includes("Success")) {
-        //                                 window.location.reload();
-        //                             } else if(result.includes("ERROR")) {
-        //                                 setErrorMsg(result);
-        //                             }
-        //                         })
-        //                         .catch(err => console.error(err));
-        //
-        //                 } else {
-        //                     setInvalid(pointEl, 'Points must be integer');
-        //                 }
-        //             } else if(event.target.innerText === 'Update'){
-        //                 if(prevEl != null) {
-        //                     const formDataUpdate = new FormData();
-        //                     formDataUpdate.append("id", +prevEl.dataset.AwardId);
-        //                     formDataUpdate.append("name", nameEl.value);
-        //                     formDataUpdate.append("description", descriptionEl.value);
-        //
-        //                     fetch("http://localhost:8080/awards/update", {
-        //                         method: "POST",
-        //                         body: formDataUpdate
-        //                     })
-        //                         .then(response => response.text())
-        //                         .then(result => {
-        //                             console.log("Server response:", result);
-        //                             if(result.includes("Success")) {
-        //                                 window.location.reload();
-        //                             } else {
-        //                                 setErrorMsg(result);
-        //                             }
-        //                         })
-        //                         .catch(err => {
-        //                             console.error(err)
-        //                             setErrorMsg(err);
-        //                         });
-        //
-        //                 } else {
-        //                     setErrorMsg("Nothing to update");
-        //                 }
-        //
-        //
-        //             }
-        //         }
-        //     }
-        // });
-    });
+
+        document.addEventListener('click', event => {
+            // let loginFlag = true;
+            removeErrorMassage();
+            if(event.target.id === 'btn-submit') {
+                if(event.target.innerText === 'Create' || event.target.innerText === 'Update') {
+                    event.preventDefault();
+                    if(event.target.innerText === 'Create') {
+                        // const completionPercent = +cpEl.value;
+                        // if(Number.isFinite(completionPercent)) {
+                        //     const params = new URLSearchParams();
+                        //     params.append("completionPercent", completionPercent);
+                        //     params.append("isAllGoalsCompleted", goalsCompletedEl.checked);
+                        //     params.append("teacherId", teacherEl.value);
+                        //     params.append("projectId", projectEl.value);
+                        //     params.append("awardId", awardId);
+                        const completionPercent = parseFloat(cpEl.value);
+                        const isAllGoalsCompleted = goalsCompletedEl.checked; // true/false
+                        const teacherId = parseInt(teacherEl.value, 10);
+                        const projectId = parseInt(projectEl.value, 10);
+                        const awardIdNum = parseInt(awardId.id, 10);
+                        // console.log(completionPercent);
+                        // console.log(isAllGoalsCompleted);
+                        // console.log(teacherId);
+                        // console.log(projectId);
+                        // console.log(awardIdNum);
+
+                        if (Number.isFinite(completionPercent) && Number.isInteger(teacherId) && Number.isInteger(projectId) && Number.isInteger(awardIdNum)) {
+                            const params = new URLSearchParams();
+                            params.append("completionPercent", completionPercent);
+                            params.append("isAllGoalsCompleted", isAllGoalsCompleted);
+                            params.append("teacherId", teacherId);
+                            params.append("projectId", projectId);
+                            params.append("awardId", awardIdNum);
+
+                            fetch("http://localhost:8080/awards-rule/create", {
+                                method: "POST",
+                                body: params,
+                                headers: {
+                                    "Content-Type": "application/x-www-form-urlencoded"
+                                }
+                            })
+                                .then(response => response.text())
+                                .then(result => {
+                                    console.log("Server response:", result);
+                                    if(result.includes("Success")) {
+                                        window.location.reload();
+                                    } else if(result.includes("ERROR")) {
+                                        setErrorMsg(result);
+                                    }
+                                })
+                                .catch(err => console.error(err));
+
+                        } else {
+                            setErrorMsg("Incorrect values");
+                        }
+                    } else if(event.target.innerText === 'Update'){
+                        if(prevEl != null) {
+                            const params = new URLSearchParams();
+                            params.append("ruleId",  +prevEl.dataset.RuleId);
+                            params.append("completionPercent", parseFloat(cpEl.value));
+                            params.append("isAllGoalsCompleted", goalsCompletedEl.checked);
+                            params.append("awardId", parseInt(awardId.id, 10));
+
+                            fetch("http://localhost:8080/awards-rule/update", {
+                                method: "POST",
+                                body: params,
+                                headers: {
+                                    "Content-Type": "application/x-www-form-urlencoded"
+                                }
+                            })
+                                .then(response => response.text())
+                                .then(result => {
+                                    console.log("Server response:", result);
+                                    if(result.includes("Success")) {
+                                        window.location.reload();
+                                    } else {
+                                        setErrorMsg(result);
+                                    }
+                                })
+                                .catch(err => {
+                                    console.error(err)
+                                    setErrorMsg(err);
+                                });
+
+                        } else {
+                            setErrorMsg("Nothing to update");
+                        }
+
+
+                    }
+                }
+            }
+        });
+    }).catch(error => {
+    setErrorMsg(error);
+});
 
 
 

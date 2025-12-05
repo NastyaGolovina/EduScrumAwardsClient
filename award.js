@@ -232,7 +232,7 @@ fetch("http://localhost:8080/awards/all")
                 if(prevEl !== null) {
                     removeBtn();
                     activateDeactivatedForm(true);
-                    if (confirm("Do you want to delete this user?")) {
+                    if (confirm("Do you want to delete this award?")) {
                         console.log(prevEl.dataset.AwardId);
                         fetch(`http://localhost:8080/awards/delete/${prevEl.dataset.AwardId}`, {
                             method: "DELETE"
