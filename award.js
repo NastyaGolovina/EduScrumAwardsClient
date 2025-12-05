@@ -286,13 +286,8 @@ fetch("http://localhost:8080/awards/all")
                 award.id = +prevEl.dataset.AwardId
                 localStorage.setItem("award", JSON.stringify(award));
                 // setTimeout(() => {
-                //     // window.location.href = this.href;
-                //
-                //     //get on award rule page
-                //     // const lsObj = localStorage.getItem("award");
-                //     // let newObj = JSON.parse(lsObj);
-                //     // console.log(newObj);
-                // }, 1000);
+                    window.location.href =  awardRulesBtn.href;
+                // }, 100);
             }
         });
         //
