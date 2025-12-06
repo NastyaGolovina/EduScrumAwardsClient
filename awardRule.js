@@ -56,8 +56,6 @@ function fillForm(currentEl,rules) {
                 rules[i].project.projectId,
                 rules[i].teacher.userId,
                 );
-
-
         }
     }
 }
@@ -192,6 +190,9 @@ Promise.all([
                 activateDeactivatedForm(false);
                 teacherEl.disabled = true;
                 projectEl.disabled = true;
+                if(goalsCompletedEl.checked) {
+                    cpEl.disabled = true;
+                }
 
                 removeBtn();
                 createBtn('Update');
@@ -279,27 +280,15 @@ Promise.all([
 
 
 
-        //
-        //
-        //
-        //
-        // document.addEventListener('change', event => {
-        //     if(document.getElementById('btn-submit') !== null) {
-        //         if(event.target.id === 'permission') {
-        //             if(event.target.value === "CUSTOMER" ) {
-        //                 loyaltyEl.disabled = false;
-        //             } else {
-        //                 loyaltyEl.value = '';
-        //                 loyaltyEl.disabled = true;
-        //             }
-        //         }
-        //     }
-        // });
-        //
-        //
-        //
-
-
+        goalsCompletedEl.addEventListener('change', function() {
+            if (goalsCompletedEl.checked) {
+                cpEl.disabled =true;
+                cpEl.value = 100;
+            } else {
+                cpEl.disabled = false;
+                cpEl.value = '';
+            }
+        });
 
 
         document.addEventListener('click', event => {

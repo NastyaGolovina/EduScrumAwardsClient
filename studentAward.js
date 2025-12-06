@@ -7,6 +7,7 @@ const teamEl = document.getElementById("team");
 const dateEl = document.getElementById("date");
 const pointsEl = document.getElementById("points");
 const sprintEl = document.getElementById("sprint");
+const ruleEl = document.getElementById("rule");
 
 const createFormBtn = document.getElementById("create");
 // const updateFormBtn = document.getElementById("update");
@@ -27,6 +28,7 @@ function activateDeactivatedForm(isDisabled) {
     studentEl.disabled = isDisabled;
     projectEl.disabled = isDisabled;
     teamEl.disabled = isDisabled;
+
 }
 
 function activateDeactivatedTeamStudentForm(isTeam,isStudent) {
@@ -48,9 +50,10 @@ function cleanInputEl() {
     dateEl.value = '';
     pointsEl.value = '';
     sprintEl.value = '';
+    ruleEl.value = '';
 }
 
-function fillInputEl(type, award, teacher, student, project, team,date, points,sprint) {
+function fillInputEl(type, award, teacher, student, project, team,date, points,sprint,rule) {
     typeEl.value = type;
     awardEl.value = award;
     teacherEl.value = teacher;
@@ -60,6 +63,7 @@ function fillInputEl(type, award, teacher, student, project, team,date, points,s
     dateEl.value = date;
     pointsEl.value = points;
     sprintEl.value = sprint;
+    ruleEl.value = rule;
 }
 
 
@@ -76,7 +80,8 @@ function fillForm(currentEl,studentsAwards) {
                 studentsAwards[i].team.teamID,
                 studentsAwards[i].date,
                 studentsAwards[i].points,
-                studentsAwards[i].sprint?.sprintId ?? "null");
+                studentsAwards[i].sprint?.sprintId ?? "null",
+                studentsAwards[i].rule?.ruleId ?? "null");
 
 
         }
@@ -152,6 +157,7 @@ function removeErrorMassage() {
     dateEl.classList.remove('is-invalid');
     pointsEl.classList.remove('is-invalid');
     sprintEl.classList.remove('is-invalid');
+    ruleEl.classList.remove('is-invalid');
 }
 
 
@@ -194,7 +200,7 @@ Promise.all([
     fetch("http://localhost:8080/team/all").then(r => r.json()),
 ]).then(([studentsAwards, projects,teachers,awards,students,team]) => {
 
-    // console.log(studentsAwards);
+    console.log(studentsAwards);
     // console.log(projects);
     // console.log(teachers);
     // console.log(awards);
@@ -236,7 +242,7 @@ Promise.all([
         cleanInputEl();
         typeEl.disabled = false;
         removeBtn();
-        createBtn('Create');
+        createBtn('Assign');
     });
 
 
@@ -339,7 +345,7 @@ Promise.all([
         // let loginFlag = true;
         removeErrorMassage();
         if(event.target.id === 'btn-submit') {
-            if(event.target.innerText === 'Create') {
+            if(event.target.innerText === 'Assign') {
                 event.preventDefault();
                 if(typeEl.value === "INDIVIDUAL") {
 
