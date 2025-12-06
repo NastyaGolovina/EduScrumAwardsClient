@@ -214,7 +214,7 @@ Promise.all([
 
 
     createFormBtn.addEventListener('click', event => {
-        console.log("createFormBtn")
+        // console.log("createFormBtn")
         prevIsCreate = true;
         removeErrorMassage();
         cleanInputEl();
@@ -304,12 +304,23 @@ Promise.all([
         if(document.getElementById('btn-submit') !== null) {
             if(event.target.id === 'type') {
                 if(event.target.value === "TEAM" ) {
+                    cleanInputEl();
+                    typeEl.value = "TEAM";
                     activateDeactivatedTeamStudentForm(false,true);
                 } else if (event.target.value === "INDIVIDUAL" ) {
+                    cleanInputEl();
+                    typeEl.value = "INDIVIDUAL";
                     activateDeactivatedTeamStudentForm(true,false);
                 } else  {
                     activateDeactivatedForm(true);
                     typeEl.disabled = false;
+                }
+            } else if(event.target.id === 'award') {
+
+                for(let i = 0; i < awards.length; i++) {
+                    if(awards[i].awardID == event.target.value ) {
+                        pointsEl.value = awards[i].pointsValue;
+                    }
                 }
             }
         }
@@ -318,17 +329,51 @@ Promise.all([
 
 
 
-    //
-    // document.addEventListener('click', event => {
-    //     // let loginFlag = true;
-    //     removeErrorMassage();
-    //     if(event.target.id === 'btn-submit') {
-    //         if(event.target.innerText === 'Create') {
-    //             event.preventDefault();
-    //
-    //         }
-    //     }
-    // });
+
+    document.addEventListener('click', event => {
+        // let loginFlag = true;
+        removeErrorMassage();
+        if(event.target.id === 'btn-submit') {
+            if(event.target.innerText === 'Create') {
+                event.preventDefault();
+                if(typeEl.value === "INDIVIDUAL") {
+
+                    const awardId = parseInt(awardEl.value, 10);
+                    const studentId = parseInt(studentEl.value, 10);
+                    const teacherId = parseInt(teacherEl.value, 10);
+                    const projectId = parseInt(projectEl.value, 10);
+                    if(Number.isFinite(studentId) && Number.isInteger(teacherId) && Number.isInteger(projectId) && Number.isInteger(awardId)) {
+                        const formDataCreate = new FormData();
+                        formDataCreate.append("awardId", awardId);
+                        formDataCreate.append("studentId", studentId);
+                        formDataCreate.append("teacherId", teacherId);
+                        formDataCreate.append("projectId", projectId);
+
+                        fetch("http://localhost:8080/students-awards/assignStudentAward", {
+                            method: "POST",
+                            body: formDataCreate
+                        })
+                            .then(response => response.text())
+                            .then(result => {
+                                console.log("Server response:", result);
+                                if(result.includes("Success")) {
+                                    window.location.reload();
+                                } else if(result.includes("ERROR")) {
+                                    setErrorMsg(result);
+                                }
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                setErrorMsg(err);
+                            });
+
+                    } else {
+                        setErrorMsg("Wrong parms");
+                    }
+                }
+            }
+        }
+    });
 
 
 }).catch(error => {
