@@ -167,6 +167,25 @@ function setErrorMsg(errorMsg) {
 }
 
 
+function exportToExcel(data, filename = "export.xlsx") {
+    // Вложенные объекты -> JSON строка
+    const prepared = data.map(item => {
+        const obj = {};
+        for (let key in item) {
+            obj[key] = (typeof item[key] === "object")
+                ? JSON.stringify(item[key])
+                : item[key];
+        }
+        return obj;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(prepared);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    XLSX.writeFile(workbook, filename);
+}
+
+
 Promise.all([
     fetch("http://localhost:8080/students-awards/all").then(r => r.json()),
     fetch("http://localhost:8080/awards/projects/all").then(r => r.json()),
@@ -176,12 +195,12 @@ Promise.all([
     fetch("http://localhost:8080/team/all").then(r => r.json()),
 ]).then(([studentsAwards, projects,teachers,awards,students,team]) => {
 
-    console.log(studentsAwards);
-    console.log(projects);
-    console.log(teachers);
-    console.log(awards);
-    console.log(students);
-    console.log(team);
+    // console.log(studentsAwards);
+    // console.log(projects);
+    // console.log(teachers);
+    // console.log(awards);
+    // console.log(students);
+    // console.log(team);
 
 
     for(let i = 0 ; i < studentsAwards.length ; i++) {
@@ -204,8 +223,6 @@ Promise.all([
     for(let s = 0 ; s < team.length; s++) {
         addOptions(teamEl, team[s].teamID,  team[s].teamName);
     }
-
-
     if(studentsAwards.length > 0) {
         fillForm(prevEl, studentsAwards);
     }
@@ -223,56 +240,50 @@ Promise.all([
         createBtn('Create');
     });
 
-//
-//
-//
-//
-//     deleteFormBtn.addEventListener('click', () => {
-//         console.log(prevIsCreate);
-//         if(prevIsCreate) {
-//             prevIsCreate = false;
-//             window.location.reload();
-//         } else {
-//             console.log(prevIsCreate);
-//             removeErrorMassage();
-//             if(prevEl !== null) {
-//                 removeBtn();
-//                 activateDeactivatedForm(true);
-//                 if (confirm("Do you want to delete this rule?")) {
-//
-//                     const params = new URLSearchParams();
-//                     params.append("ruleId",  +prevEl.dataset.RuleId);
-//                     params.append("awardId", parseInt(awardId.id, 10));
-//
-//                     fetch("http://localhost:8080/awards-rule/delete", {
-//                         method: "DELETE",
-//                         body: params,
-//                         headers: {
-//                             "Content-Type": "application/x-www-form-urlencoded"
-//                         }
-//                     })
-//                         .then(response => response.text())
-//                         .then(result => {
-//                             console.log("Server response:", result);
-//                             if(result.includes("successfully")) {
-//                                 window.location.reload();
-//                             } else {
-//                                 setErrorMsg(result);
-//                             }
-//                         })
-//                         .catch(err => {
-//                             console.error("Fetch error:", err);
-//                             setErrorMsg(err);
-//                         });
-//                 }
-//             } else  {
-//                 alert("You didn't choose nothing. Choose element to delete");
-//             }
-//         }
-//     });
-//
-//
-//
+
+
+
+
+    deleteFormBtn.addEventListener('click', () => {
+        console.log(prevIsCreate);
+        if(prevIsCreate) {
+            prevIsCreate = false;
+            window.location.reload();
+        } else {
+            console.log(prevIsCreate);
+            removeErrorMassage();
+            if(prevEl !== null) {
+                removeBtn();
+                activateDeactivatedForm(true);
+                if (confirm("Do you want to delete this entity?")) {
+
+                    fetch(`http://localhost:8080/students-awards/delete/${prevEl.dataset.StudentAwardId}`, {
+                        method: "DELETE"
+                    })
+                        .then(response => response.text())
+                        .then(result => {
+                            console.log("Server response:", result);
+                            if(result.includes("successfully")) {
+                                window.location.reload();
+                            } else {
+                                setErrorMsg(result);
+                            }
+                        })
+                        .catch(err => {
+                            console.error("Fetch error:", err);
+                            setErrorMsg(err);
+                        });
+                }
+            } else  {
+                alert("You didn't choose nothing. Choose element to delete");
+            }
+        }
+    });
+
+    downloadFormBtn.addEventListener('click', event => {
+        exportToExcel(studentsAwards, "students_awards.xlsx");
+    });
+
 
     listEl.addEventListener('click', event => {
         prevIsCreate = false;
@@ -285,15 +296,10 @@ Promise.all([
             currentEl = currentEl.parentNode;
         }
         prevEl = currentEl;
-        // console.log(currentEl);
         currentEl.classList.add('active');
         fillForm(currentEl,studentsAwards);
 
     });
-
-
-
-
 
 
 
@@ -370,6 +376,40 @@ Promise.all([
                     } else {
                         setErrorMsg("Wrong parms");
                     }
+                } else if(typeEl.value === "TEAM") {
+
+
+
+                    const awardId = parseInt(awardEl.value, 10);
+                    const teacherId = parseInt(teacherEl.value, 10);
+                    const teamId = parseInt(teamEl.value, 10);
+                    if(Number.isInteger(teacherId) && Number.isInteger(teamId) && Number.isInteger(awardId)) {
+                        const formDataCreate = new FormData();
+                        formDataCreate.append("awardId", awardId);
+                        formDataCreate.append("teacherId", teacherId);
+                        formDataCreate.append("teamId", teamId);
+
+                        fetch("http://localhost:8080/students-awards/assignTeamAward", {
+                            method: "POST",
+                            body: formDataCreate
+                        })
+                            .then(response => response.text())
+                            .then(result => {
+                                console.log("Server response:", result);
+                                if(result.includes("Success")) {
+                                    window.location.reload();
+                                } else if(result.includes("ERROR")) {
+                                    setErrorMsg(result);
+                                }
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                setErrorMsg(err);
+                            });
+
+                    } else {
+                        setErrorMsg("Wrong parms");
+                    }
                 }
             }
         }
@@ -381,8 +421,3 @@ Promise.all([
 });
 
 
-
-
-
-
-//
