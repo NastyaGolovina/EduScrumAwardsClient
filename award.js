@@ -379,7 +379,9 @@ fetch("http://localhost:8080/awards/all")
                 }
             }
         });
-    });
+    }).catch(error => {
+    setErrorMsg(error);
+});
 
 
 
