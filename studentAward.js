@@ -168,7 +168,6 @@ function setErrorMsg(errorMsg) {
 
 
 function exportToExcel(data, filename = "export.xlsx") {
-    // Вложенные объекты -> JSON строка
     const prepared = data.map(item => {
         const obj = {};
         for (let key in item) {
