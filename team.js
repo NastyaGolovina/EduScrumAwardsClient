@@ -281,4 +281,3 @@ fetch("http://localhost:8080/team/all")
                   .catch((error) => {
                       setErrorMsg(error);
                   });
-
