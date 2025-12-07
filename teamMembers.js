@@ -128,6 +128,7 @@ Promise.all([
     fetch(`http://localhost:8080/team-member/all/${team.id}`).then((r) => r.json()),
 //waiting for real student api
    // fetch("http://localhost:8080/users/all-students").then((r) => r.json()),
+   fetch("http://localhost:8080/awards/students/all").then((r) => r.json()),
 ]).then(([members, students]) => {
     console.log(members);
     console.log(students);
