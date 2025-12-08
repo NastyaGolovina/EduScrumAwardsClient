@@ -78,7 +78,7 @@ function fillForm(currentEl,studentsAwards) {
                 studentsAwards[i].student.userId,
                 studentsAwards[i].project.projectId,
                 studentsAwards[i].team.teamID,
-                studentsAwards[i].date,
+                studentsAwards[i].date.replace("T", " "),
                 studentsAwards[i].points,
                 studentsAwards[i].sprint?.sprintId ?? "null",
                 studentsAwards[i].rule?.ruleId ?? "null");
@@ -121,7 +121,7 @@ function addElInList(id, name, date, i) {
     divText.className = 'col-10 mb-1 small'
     strongEl.innerText = name;
     divHeader.appendChild(strongEl);
-    divText.innerText = date;
+    divText.innerText = date.slice(0, 16).replace("T", " ");
     aEl.appendChild(divHeader);
     aEl.appendChild(divText);
     listEl.appendChild(aEl);

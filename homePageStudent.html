@@ -40,6 +40,51 @@
             </div>
         </div>
     </header>
+    <div class="alert alert-danger alert-dismissible fade show" id="errorMsg" role="alert" style="display: none">
+        <p class="m-0" id="errorMsgText">Something went wrong</p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+
+            <div class="col-md-6"  style="height: 85vh; overflow-y: auto;">
+                    <table class="table table-striped table-sm" style="width: 100%;">
+                        <thead style="position: sticky; top: 0; background: white; z-index: 50;">
+                        <tr>
+                            <th scope="col">Id</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Award</th>
+                            <th scope="col">Points</th>
+                            <th scope="col">Project</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+
+
+
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-6">
+
+                <div class="my-3 bg-body rounded shadow-sm"
+                     style="min-height: 100px; max-height: 80vh; overflow-y: auto; position: relative;">
+
+                    <div style="position: sticky; top: 0; background: white; z-index: 50;" class="p-3 pb-2 border-bottom">
+                        <h6 class="mb-0">Courses</h6>
+                    </div>
+
+                    <div class="p-3 " id="courses">
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <script src="homePageStudent.js"></script>
 
     </body>
 </html>

@@ -58,6 +58,7 @@ function createProgressBar(precent) {
     divEl.ariaValuemin="0";
     const progressBar = document.createElement("div");
     progressBar.className="progress-bar";
+    progressBar.style.background =`${colors[Math.floor(Math.random() * colors.length)]}`;
     progressBar.style.width = `${precent}%`;
 
     divEl.appendChild(progressBar);
