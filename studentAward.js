@@ -195,7 +195,7 @@ Promise.all([
     fetch("http://localhost:8080/students-awards/all").then(r => r.json()),
     fetch("http://localhost:8080/awards/projects/all").then(r => r.json()),
     fetch("http://localhost:8080/awards/teachers/all").then(r => r.json()),
-    fetch("http://localhost:8080/awards/all").then(r => r.json()),
+    fetch("http://localhost:8080/awards/all/DTO").then(r => r.json()),
     fetch("http://localhost:8080/awards/students/all").then(r => r.json()),
     fetch("http://localhost:8080/team/all").then(r => r.json()),
 ]).then(([studentsAwards, projects,teachers,awards,students,team]) => {

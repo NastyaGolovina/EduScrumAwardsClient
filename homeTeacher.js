@@ -117,8 +117,8 @@ Promise.all([
     fetch("http://localhost:8080/dashboard/teams/points").then(r => r.json()),
 ]).then(([students_points, teams_points]) => {
     //
-    // console.log(students_points);
-    // console.log(teams_points);
+    console.log(students_points);
+    console.log(teams_points);
 
     fillTop(students_points,studentsTopEl);
     fillTop(teams_points,teamTopEl);
