@@ -1,5 +1,6 @@
 const studentsTopEl = document.getElementById("students_top");
 const teamTopEl = document.getElementById("team_top");
+const projectProgressEl = document.getElementById("project_progress");
 // const colors = ["#e83e8c", "#6f42c1", "#007bff"];
 const colors = [
     "#e83e8c",
@@ -13,31 +14,7 @@ const colors = [
 ];
 
 
-function addEntity(El,name,pointValue,number) {
-
-    const divEl = document.createElement("div");
-    const pNameEl = document.createElement("p");
-    const strongEl = document.createElement("strong");
-    const pPointsEl = document.createElement("p");
-    const strongPointsEl = document.createElement("strong");
-
-    pPointsEl.className = "pb-3 mb-0 small lh-sm border-bottom ms-auto"
-    strongPointsEl.strongPointsEl = "d-block text-gray-dark"
-    strongEl.className = "d-block text-gray-dark"
-    pNameEl.className = "pb-3 mb-0 small lh-sm border-bottom flex-grow-1";
-    divEl.className = "d-flex text-body-secondary pt-3"
-
-    strongEl.innerText = name;
-    pNameEl.appendChild(strongEl);
-    if(number !== undefined && number !== null ) {
-        const pEl = document.createElement("p");
-        pEl.innerText = number;
-        pEl.className = "m-0";
-        pNameEl.appendChild(pEl);
-    }
-    strongPointsEl.innerText = pointValue;
-    pPointsEl.appendChild(strongPointsEl);
-
+function createSVG() {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("aria-label", "Placeholder: 32x32");
     svg.setAttribute("class", "bd-placeholder-img flex-shrink-0 me-2 rounded");
@@ -68,8 +45,71 @@ function addEntity(El,name,pointValue,number) {
     text.textContent = "32x32";
     svg.appendChild(text);
 
+    return svg;
 
-    divEl.appendChild(svg);
+}
+
+function createProgressBar(precent) {
+    const divEl = document.createElement("div");
+    divEl.className = "progress mt-3";
+    divEl.role="progressbar";
+    divEl.ariaLabel="Basic example";
+    divEl.ariaValuenow="0";
+    divEl.ariaValuemin="0";
+    const progressBar = document.createElement("div");
+    progressBar.className="progress-bar";
+    progressBar.style.width = `${precent}%`;
+
+    divEl.appendChild(progressBar);
+
+    return divEl;
+
+}
+
+function addProjectProgress(name, precent) {
+    const divEl = document.createElement("div");
+    const divNameEl = document.createElement("div");
+    const strongEl = document.createElement("strong");
+
+    strongEl.className = "d-block text-gray-dark"
+    divNameEl.className = "pb-3 mb-0 small lh-sm border-bottom flex-grow-1";
+    divEl.className = "d-flex text-body-secondary pt-3"
+
+    strongEl.innerText = name;
+    divNameEl.appendChild(strongEl);
+    divNameEl.appendChild(createProgressBar(precent));
+    divEl.appendChild(createSVG());
+    divEl.appendChild(divNameEl);
+    projectProgressEl.appendChild(divEl);
+
+}
+
+function addEntity(El, name, pointValue, number) {
+
+    const divEl = document.createElement("div");
+    const pNameEl = document.createElement("p");
+    const strongEl = document.createElement("strong");
+    const pPointsEl = document.createElement("p");
+    const strongPointsEl = document.createElement("strong");
+
+    pPointsEl.className = "pb-3 mb-0 small lh-sm border-bottom ms-auto"
+    strongPointsEl.strongPointsEl = "d-block text-gray-dark"
+    strongEl.className = "d-block text-gray-dark"
+    pNameEl.className = "pb-3 mb-0 small lh-sm border-bottom flex-grow-1";
+    divEl.className = "d-flex text-body-secondary pt-3"
+
+    strongEl.innerText = name;
+    pNameEl.appendChild(strongEl);
+    if(number !== undefined && number !== null ) {
+        const pEl = document.createElement("p");
+        pEl.innerText = number;
+        pEl.className = "m-0";
+        pNameEl.appendChild(pEl);
+    }
+    strongPointsEl.innerText = pointValue;
+    pPointsEl.appendChild(strongPointsEl);
+
+    divEl.appendChild(createSVG());
     divEl.appendChild(pNameEl);
     divEl.appendChild(pPointsEl);
     El.appendChild(divEl);
@@ -110,18 +150,27 @@ function fillTop(points,el) {
         addEntity(el, points[i].name, points[i].points, points[i].studentNumber)
     }
 }
+function fillProgress(projects_progress) {
+    for(let i = 0 ; i < projects_progress.length;i++) {
+        addProjectProgress(projects_progress[i].projectName,projects_progress[i].progress);
+    }
+}
 
 
 Promise.all([
     fetch("http://localhost:8080/dashboard/students/points").then(r => r.json()),
     fetch("http://localhost:8080/dashboard/teams/points").then(r => r.json()),
-]).then(([students_points, teams_points]) => {
+    fetch("http://localhost:8080/dashboard/projects/progress").then(r => r.json()),
+]).then(([students_points, teams_points,projects_progress]) => {
     //
     console.log(students_points);
     console.log(teams_points);
+    console.log(projects_progress);
 
     fillTop(students_points,studentsTopEl);
     fillTop(teams_points,teamTopEl);
+    fillProgress(projects_progress);
+
 
 
 
@@ -130,6 +179,7 @@ Promise.all([
 }).catch(error => {
     setErrorMsg(error);
 });
+
 
 
 
