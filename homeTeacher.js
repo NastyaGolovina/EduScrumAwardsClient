@@ -1,10 +1,19 @@
 const studentsTopEl = document.getElementById("students_top");
 const teamTopEl = document.getElementById("team_top");
-const colors = ["#e83e8c", "#6f42c1", "#007bff"];
+// const colors = ["#e83e8c", "#6f42c1", "#007bff"];
+const colors = [
+    "#e83e8c",
+    "#6f42c1",
+    "#007bff",
+    "#20c997",
+    "#fd7e14",
+    "#ffc107",
+    "#17a2b8",
+    "#dc3545"
+];
 
 
-
-function addEntity(El,name,pointValue) {
+function addEntity(El,name,pointValue,number) {
 
     const divEl = document.createElement("div");
     const pNameEl = document.createElement("p");
@@ -20,6 +29,12 @@ function addEntity(El,name,pointValue) {
 
     strongEl.innerText = name;
     pNameEl.appendChild(strongEl);
+    if(number !== undefined && number !== null ) {
+        const pEl = document.createElement("p");
+        pEl.innerText = number;
+        pEl.className = "m-0";
+        pNameEl.appendChild(pEl);
+    }
     strongPointsEl.innerText = pointValue;
     pPointsEl.appendChild(strongPointsEl);
 
@@ -36,7 +51,7 @@ function addEntity(El,name,pointValue) {
     title.textContent = "Placeholder";
     svg.appendChild(title);
 
-    const color =  colors[Math.floor(Math.random() * 3)];
+    const color =  colors[Math.floor(Math.random() * colors.length)];
 // <rect>
     const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     rect.setAttribute("width", "100%");
@@ -83,4 +98,41 @@ function addEntity(El,name,pointValue) {
 //     </p>
 // </div>
 }
+
+
+function setErrorMsg(errorMsg) {
+    document.getElementById('errorMsg').style.display = 'block';
+    document.getElementById('errorMsgText').innerText = errorMsg;
+}
+
+function fillTop(points,el) {
+    for(let i = 0 ; i < points.length;i++) {
+        addEntity(el, points[i].name, points[i].points, points[i].studentNumber)
+    }
+}
+
+
+Promise.all([
+    fetch("http://localhost:8080/dashboard/students/points").then(r => r.json()),
+    fetch("http://localhost:8080/dashboard/teams/points").then(r => r.json()),
+]).then(([students_points, teams_points]) => {
+    //
+    // console.log(students_points);
+    // console.log(teams_points);
+
+    fillTop(students_points,studentsTopEl);
+    fillTop(teams_points,teamTopEl);
+
+
+
+
+
+}).catch(error => {
+    setErrorMsg(error);
+});
+
+
+
+
+
 

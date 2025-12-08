@@ -201,11 +201,11 @@ Promise.all([
 ]).then(([studentsAwards, projects,teachers,awards,students,team]) => {
 
     console.log(studentsAwards);
-    // console.log(projects);
-    // console.log(teachers);
-    // console.log(awards);
-    // console.log(students);
-    // console.log(team);
+    console.log(projects);
+    console.log(teachers);
+    console.log(awards);
+    console.log(students);
+    console.log(team);
 
 
     for(let i = 0 ; i < studentsAwards.length ; i++) {
