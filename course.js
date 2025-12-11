@@ -2,6 +2,7 @@ const nameEl = document.getElementById("name");
 const createFormBtn = document.getElementById("create");
 const updateFormBtn = document.getElementById("update");
 const deleteFormBtn = document.getElementById("delete");
+const courseTeachersBtn = document.getElementById("courseTeachers");
 const listEl = document.getElementById('course_list');
 const formEl = document.getElementsByTagName("form")[0];
 
@@ -164,6 +165,20 @@ fetch("http://localhost:8080/Courses/all")
         } else {
           alert("You didn't choose nothing. Choose element to delete");
         }
+      }
+    });
+
+    courseTeachersBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (prevEl != null) {
+        const course = {
+          id: +prevEl.dataset.CourseId,
+          name: prevEl.querySelector('strong').innerText
+        };
+        localStorage.setItem("course", JSON.stringify(course));
+        window.location.href = courseTeachersBtn.href;
+      } else {
+        alert("You didn't choose any course.");
       }
     });
 
