@@ -328,6 +328,17 @@ Promise.all([
 
           const isResp = isResponsibleEl.checked;
 
+          // Validate: Teacher uniqueness (cannot add same teacher twice)
+          const teacherAlreadyAssigned = allAssignments.some(a => {
+            const tId = a.teacher ? (a.teacher.userId ?? a.teacher.id) : (a.teacherID ?? a.teacherId);
+            return tId === teacherId;
+          });
+
+          if (teacherAlreadyAssigned) {
+            setErrorMsg("This teacher is already assigned to this course.");
+            return;
+          }
+
           // Validate: Only one responsible teacher allowed
           try {
             if (isResp) {
