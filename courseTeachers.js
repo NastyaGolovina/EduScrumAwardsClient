@@ -37,7 +37,18 @@ function fillInputEl(assignment) {
   } else {
     teacherSelectEl.value = assignment.teacherID ?? assignment.teacherId;
   }
-  isResponsibleEl.checked = assignment.isResponsible;
+  const val = assignment.responsible ?? assignment.isResponsible;
+  isResponsibleEl.checked = val === true || val === "true";
+}
+
+// Helper to determine responsibility safely
+function isAssignmentResponsible(assignment) {
+  let val = assignment.responsible;
+  if (val === undefined) val = assignment.isResponsible;
+  if (val === undefined) val = assignment.IsResponsible; // Fallback
+
+  // console.log("Checking responsibility:", assignment, "Result:", val === true || val === "true" || val === 1);
+  return val === true || val === "true" || val === 1;
 }
 
 function fillForm(currentEl, assignments) {
@@ -92,12 +103,19 @@ function addElInList(assignment, teacherName, i) {
   divText.className = "col-10 mb-1 small";
 
   let displayText = teacherName || `Teacher ${tId}`;
-  if (assignment.isResponsible) {
-    displayText += " (Responsible)";
-    strongEl.classList.add("text-primary");
-  }
 
-  strongEl.innerText = displayText;
+  const val = assignment.responsible ?? assignment.isResponsible;
+  const isResp = val === true || val === "true";
+
+  if (isResp) {
+    // Add a star icon and bold styling
+    // Use bg-warning for contrast against both white list and blue active state
+    strongEl.innerHTML = `${displayText} <span class="badge bg-warning text-dark ms-2">Responsible</span>`;
+    // Remove text-primary so it turns white when active
+    // strongEl.classList.add("text-primary"); 
+  } else {
+    strongEl.innerText = displayText;
+  }
   // divText.innerText = assignment.role || ""; 
 
   divHeader.appendChild(strongEl);
@@ -128,8 +146,15 @@ function setInvalid(el, errorText) {
 }
 
 function setErrorMsg(errorMsg) {
-  document.getElementById("errorMsg").style.display = "block";
-  document.getElementById("errorMsgText").innerText = errorMsg;
+  const msgDiv = document.getElementById("errorMsg");
+  const msgText = document.getElementById("errorMsgText");
+  if (msgDiv && msgText) {
+    msgDiv.style.display = "block";
+    msgText.innerText = errorMsg;
+  } else {
+    console.error("Error message element not found:", errorMsg);
+    alert(errorMsg); // Fallback
+  }
 }
 
 if (course && course.id) {
@@ -160,14 +185,25 @@ Promise.all([
   console.log("All Teachers:", allTeachers);
 
   // Sort: Responsible first
-  allAssignments.sort((a, b) => (b.isResponsible === true) - (a.isResponsible === true));
+  // Sort: Responsible first
+  allAssignments.sort((a, b) => {
+    // Helper to safely get boolean
+    const getBool = (obj) => {
+      const val = obj.responsible ?? obj.isResponsible;
+      return val === true || val === "true";
+    };
+
+    const isRespA = getBool(a);
+    const isRespB = getBool(b);
+    return (isRespB ? 1 : 0) - (isRespA ? 1 : 0);
+  });
 
   // fill teacher dropdown
   teacherSelectEl.innerHTML = "";
   addOptions(teacherSelectEl, "", "Choose teacher...");
   for (let i = 0; i < allTeachers.length; i++) {
     const t = allTeachers[i];
-    const id = t.userId ?? t.id; // User said "userId": 1 in JSON example
+    const id = t.userId ?? t.id;
     const name = t.name;
     addOptions(teacherSelectEl, id, name);
   }
@@ -181,6 +217,10 @@ Promise.all([
 
     const teacher = allTeachers.find(t => (t.userId ?? t.id) === tId);
     const name = teacher ? teacher.name : (a.teacher ? a.teacher.name : `Unk Teacher ${tId}`);
+
+    // Debug logging
+    console.log(`Assignment for ${name}:`, a, "Responsible:", a.responsible, "IsResponsible:", a.isResponsible);
+
     addElInList(a, name, i);
   }
 
@@ -288,6 +328,21 @@ Promise.all([
 
           const isResp = isResponsibleEl.checked;
 
+          // Validate: Only one responsible teacher allowed
+          try {
+            if (isResp) {
+              const alreadyHasResponsible = allAssignments.some(a => isAssignmentResponsible(a));
+              console.log("Validation Check (Create): isResp=true, alreadyHasResponsible=", alreadyHasResponsible);
+
+              if (alreadyHasResponsible) {
+                setErrorMsg("There can only be one responsible teacher for this course.");
+                return;
+              }
+            }
+          } catch (e) {
+            console.error("Validation error:", e);
+          }
+
           fetch(`http://localhost:8080/CourseTeachers/create?courseId=${course.id}&teacherId=${teacherId}&isResponsible=${isResp}`, {
             method: "POST"
           })
@@ -306,6 +361,20 @@ Promise.all([
             // Update uses PUT and param 'id' is courseTeacherID
             const ctId = +prevEl.dataset.AssignmentId;
             const isResp = isResponsibleEl.checked;
+
+            // Validate: Only one responsible teacher allowed
+            if (isResp) {
+              // Check if any OTHER assignment (not the one we are updating) is already responsible
+              const alreadyHasResponsible = allAssignments.some(a => {
+                const aId = a.courseTeacherID ?? a.id;
+                return (aId !== ctId) && isAssignmentResponsible(a);
+              });
+
+              if (alreadyHasResponsible) {
+                setErrorMsg("There can only be one responsible teacher for this course.");
+                return;
+              }
+            }
 
             fetch(`http://localhost:8080/CourseTeachers/update?courseId=${course.id}&id=${ctId}&isResponsible=${isResp}`, {
               method: "PUT"

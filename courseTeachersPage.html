@@ -56,7 +56,8 @@
 
   <div class="alert alert-danger alert-dismissible fade show" id="errorMsg" role="alert" style="display: none">
     <p class="m-0" id="errorMsgText">Something went wrong</p>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <button type="button" class="btn-close" onclick="document.getElementById('errorMsg').style.display='none'"
+      aria-label="Close"></button>
   </div>
 
   <div class="container-fluid">
@@ -110,7 +111,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" value="" id="isResponsible" disabled>
                   <label class="form-check-label" for="isResponsible">
-                    Is Responsible (Main Teacher)
+                    Is Responsible
                   </label>
                 </div>
               </div>
