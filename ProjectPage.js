@@ -24,6 +24,13 @@
     let projects = [];
     let teams = [];
 
+    const course = JSON.parse(localStorage.getItem("course") || "null");
+    const courseId = course?.id;
+    if (!courseId) {
+        alert("No course selected. Please select a course first.");
+        return;
+    }
+
     // ===========================
     // HELPERS
     // ===========================
@@ -56,7 +63,7 @@
         const btn = document.createElement("button");
         btn.id = "btn-submit";
         btn.type = "button";
-        btn.className = "w-100 btn btn-primary btn-lg";
+        btn.className = "w-100 btn btn-primary btn-lg mt-3";
         btn.innerText = text;
         formEl.appendChild(btn);
     }
@@ -87,14 +94,6 @@
     // ===========================
     // LOAD PROJECTS
     // ===========================
-    const course = JSON.parse(localStorage.getItem("course") || "null");
-    const courseId = course?.id;
-
-    if (!courseId) {
-        alert("No course selected. Please select a course first.");
-        return;
-    }
-
     function loadProjects() {
         fetch(`http://localhost:8080/courses/${courseId}/projects`)
             .then(r => r.ok ? r.json() : Promise.reject("Projects fetch failed"))
@@ -114,8 +113,6 @@
                         a.classList.add("active");
                         fillForm(p);
                         activateForm(true);
-
-                        // Store first project in localStorage
                         localStorage.setItem("project", JSON.stringify({
                             projectId: p.projectId,
                             courseId: courseId,
@@ -158,7 +155,6 @@
         activateForm(true);
         removeBtn();
 
-        // Update localStorage when user clicks a project
         localStorage.setItem("project", JSON.stringify({
             projectId: project.projectId,
             courseId: courseId,
@@ -167,23 +163,22 @@
     });
 
     // ===========================
-    // CREATE / UPDATE / DELETE BUTTONS
+    // SHOW CREATE / UPDATE FORM
     // ===========================
     createFormBtn.addEventListener("click", () => {
         prevIsCreate = true;
         cleanForm();
-        activateForm(false);      // enable project name
-        teamSelectEl.disabled = false; // enable team select
+        activateForm(false);
+        teamSelectEl.disabled = false;
         removeBtn();
         createBtn("Create");
     });
 
     updateFormBtn.addEventListener("click", () => {
         if (!prevEl) return showError("Select a project");
-
         prevIsCreate = false;
-        activateForm(false);        // enable project name
-        teamSelectEl.disabled = true; // keep team select disabled
+        activateForm(false);
+        teamSelectEl.disabled = true;
         removeBtn();
         createBtn("Update");
 
@@ -192,16 +187,19 @@
         fillForm(project);
     });
 
+    // ===========================
+    // DELETE
+    // ===========================
     deleteFormBtn.addEventListener("click", () => {
         if (!prevEl) return showError("Select a project");
         if (!confirm("Delete this project?")) return;
 
         const projectId = prevEl.dataset.projectId;
         fetch(`http://localhost:8080/courses/${courseId}/projects/${projectId}/delete`, { method: "DELETE" })
-            .then(r => r.text())
-            .then(result => {
-                if (result.includes("Success")) loadProjects();
-                else showError(result);
+            .then(r => { if (!r.ok) throw new Error(`Delete failed: ${r.status}`); return r.text(); })
+            .then(() => {
+                prevEl = null;
+                loadProjects();
             })
             .catch(err => {
                 console.error("Delete error:", err);
@@ -210,9 +208,49 @@
     });
 
     // ===========================
-    // SPRINTS PAGE NAVIGATION
+    // SUBMIT (CREATE / UPDATE)
     // ===========================
-    sprintsBtn.addEventListener("click", (event) => {
+    document.addEventListener("click", e => {
+        if (e.target.id !== "btn-submit") return;
+
+        const name = projectNameEl.value.trim();
+        const teamId = Number(teamSelectEl.value);
+        if (!name) return showError("Project name required");
+        if (!teamId) return showError("Select a team");
+
+        const formData = new FormData();
+        formData.append("projectName", name);
+        formData.append("teamId", String(teamId));
+
+        if (prevIsCreate) {
+            fetch(`http://localhost:8080/courses/${courseId}/projects/create`, { method: "POST", body: formData })
+                .then(r => { if (!r.ok) throw new Error(`Create failed: ${r.status}`); return r.text(); })
+                .then(() => {
+                    loadProjects();
+                    removeBtn();
+                    activateForm(true);
+                })
+                .catch(err => { console.error(err); showError("Create failed."); });
+        } else {
+            if (!prevEl) return showError("Select a project to update");
+            const projectId = prevEl.dataset.projectId;
+            formData.append("projectId", projectId);
+
+            fetch(`http://localhost:8080/courses/${courseId}/projects/${projectId}/update`, { method: "PUT", body: formData })
+                .then(r => { if (!r.ok) throw new Error(`Update failed: ${r.status}`); return r.text(); })
+                .then(() => {
+                    loadProjects();
+                    removeBtn();
+                    activateForm(true);
+                })
+                .catch(err => { console.error(err); showError("Update failed."); });
+        }
+    });
+
+    // ===========================
+    // NAVIGATE TO SPRINTS
+    // ===========================
+    sprintsBtn.addEventListener("click", event => {
         event.preventDefault();
 
         if (!prevEl && projects.length > 0) {
@@ -225,60 +263,10 @@
                 courseId: courseId,
                 projectName: prevEl.querySelector("strong").innerText
             };
-
             localStorage.setItem("project", JSON.stringify(project));
             window.location.href = "sprintPage.html";
         } else {
             alert("You didn't choose any project.");
-        }
-    });
-
-    // ===========================
-    // SUBMIT (CREATE / UPDATE)
-    // ===========================
-    document.addEventListener("click", e => {
-        if (e.target.id !== "btn-submit") return;
-
-        const name = projectNameEl.value.trim();
-        const teamId = Number(teamSelectEl.value);
-
-        if (!name) return showError("Project name required");
-        if (!teamId) return showError("Select a team");
-
-        const formData = new FormData();
-        formData.append("projectName", name);
-        formData.append("teamId", String(teamId));
-
-        if (prevIsCreate) {
-            fetch(`http://localhost:8080/courses/${courseId}/projects/create`, { method: "POST", body: formData })
-                .then(r => r.text())
-                .then(result => {
-                    if (result.includes("Success")) loadProjects();
-                    else showError(result);
-                })
-                .catch(err => {
-                    console.error("Create error:", err);
-                    showError("Create failed. See console.");
-                });
-        } else {
-            if (!prevEl) return showError("Select a project to update");
-            const projectId = prevEl.dataset.projectId;
-            formData.append("projectId", projectId);
-
-            fetch(`http://localhost:8080/courses/${courseId}/projects/${projectId}/update`, {
-                method: "PUT",
-                headers: { "Accept": "text/plain" },
-                body: formData
-            })
-                .then(r => r.text())
-                .then(result => {
-                    if (result.includes("Success")) loadProjects();
-                    else showError(result);
-                })
-                .catch(err => {
-                    console.error("Update error:", err);
-                    showError("Update failed. See console.");
-                });
         }
     });
 })();

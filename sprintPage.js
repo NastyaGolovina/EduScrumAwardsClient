@@ -159,10 +159,17 @@
         fetch(`http://localhost:8080/courses/${courseId}/projects/${projectId}/sprints/${sprintId}/delete`, {
             method: "DELETE"
         })
-            .then(r => r.text())
+            .then(r => {
+                if (!r.ok) throw new Error(`Delete failed: ${r.status}`);
+                return r.text();
+            })
             .then(result => {
-                if (result.includes("Success")) loadSprints();
-                else showError(result);
+                // Clear the previous selection
+                prevEl = null;
+                prevIsCreate = false;
+
+                // Reload sprint list
+                loadSprints();
             })
             .catch(err => {
                 console.error("Delete error:", err);
