@@ -1,5 +1,13 @@
 const awardsEl = document.getElementById("table-body");
 const coursesEl = document.getElementById("courses");
+
+const nameEl = document.getElementById("name");
+const numberEl = document.getElementById("number");
+const semesterEl = document.getElementById("semester");
+const scoreEl = document.getElementById("score");
+
+
+const projectProgressEl = document.getElementById("project_progress");
 // const colors = ["#e83e8c", "#6f42c1", "#007bff"];
 const colors = [
     "#e83e8c",
@@ -12,7 +20,7 @@ const colors = [
     "#dc3545"
 ];
 
-const lsObj = localStorage.getItem("award");
+const lsObj = localStorage.getItem("user");
 let student = JSON.parse(lsObj);
 // let studentId =  student.id;
 let studentId =  1;
@@ -54,6 +62,47 @@ function createSVG() {
 
 }
 
+
+
+function createProgressBar(precent) {
+    const divEl = document.createElement("div");
+    divEl.className = "progress mt-3";
+    divEl.role="progressbar";
+    divEl.ariaLabel="Basic example";
+    divEl.ariaValuenow="0";
+    divEl.ariaValuemin="0";
+    const progressBar = document.createElement("div");
+    progressBar.className="progress-bar";
+    progressBar.style.background =`${colors[Math.floor(Math.random() * colors.length)]}`;
+    progressBar.style.width = `${precent}%`;
+
+    divEl.appendChild(progressBar);
+
+    return divEl;
+
+}
+function setErrorMsg(errorMsg) {
+    document.getElementById('errorMsg').style.display = 'block';
+    document.getElementById('errorMsgText').innerText = errorMsg;
+}
+
+function addProjectProgress(name, precent) {
+    const divEl = document.createElement("div");
+    const divNameEl = document.createElement("div");
+    const strongEl = document.createElement("strong");
+
+    strongEl.className = "d-block text-gray-dark"
+    divNameEl.className = "pb-3 mb-0 small lh-sm border-bottom flex-grow-1";
+    divEl.className = "d-flex text-body-secondary pt-3"
+
+    strongEl.innerText = name;
+    divNameEl.appendChild(strongEl);
+    divNameEl.appendChild(createProgressBar(precent));
+    divEl.appendChild(createSVG());
+    divEl.appendChild(divNameEl);
+    projectProgressEl.appendChild(divEl);
+
+}
 
 
 
@@ -111,13 +160,31 @@ function createAwardEntity(id,date,award,points,project) {
 
 }
 
+function fillProgress(projects_progress) {
+    for(let i = 0 ; i < projects_progress.length;i++) {
+        addProjectProgress(projects_progress[i].projectName,projects_progress[i].progress);
+    }
+}
+
+
+function fillStudentInfo(name, number, sem, score) {
+    nameEl.innerText = name;
+    numberEl.innerText = number;
+    semesterEl.innerText = sem;
+    scoreEl.innerText = score;
+}
+
 Promise.all([
     fetch(`http://localhost:8080/dashboard/students-awards/${studentId}`).then(r => r.json()),
     fetch(`http://localhost:8080/dashboard/course_average/${studentId}`).then(r => r.json()),
-]).then(([students_awards, course_average]) => {
+    fetch(`http://localhost:8080/dashboard/projects/progress/${studentId}`).then(r => r.json()),
+    fetch(`http://localhost:8080/students/${studentId}`).then(r => r.json()),
+]).then(([students_awards, course_average,projects_progress,student]) => {
 
     console.log(students_awards);
     console.log(course_average);
+    console.log(projects_progress);
+    console.log(student);
 
     for(let i =0; i < students_awards.length; i++) {
         createAwardEntity(students_awards[i].studentAwardId,
@@ -132,6 +199,9 @@ Promise.all([
             course_average[a].courseAverage,
             course_average[a].studentPointValue);
     }
+
+    fillProgress(projects_progress);
+    fillStudentInfo(student.name, student.studentNumber, student.currentSemester, student.totalScore);
 
 }).catch(error => {
     setErrorMsg(error);
