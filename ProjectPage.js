@@ -181,16 +181,30 @@
     // ===========================
     // DELETE
     // ===========================
+// ===========================
+// DELETE PROJECT
+// ===========================
     deleteFormBtn.addEventListener("click", () => {
-        if (!prevEl) return showError("Select a project");
+        if (!prevEl) return showError("Select a project first");
         if (!confirm("Delete this project?")) return;
 
         const projectId = prevEl.dataset.projectId;
-        fetch(`http://localhost:8080/courses/${courseId}/projects/${projectId}/delete`, { method: "DELETE" })
-            .then(r => { if (!r.ok) throw new Error(`Delete failed: ${r.status}`); return r.text(); })
-            .then(() => {
-                prevEl = null;
+
+        fetch(`http://localhost:8080/courses/${courseId}/projects/${projectId}/delete`, {
+            method: "DELETE"
+        })
+            .then(r => r.text())  // backend response message
+            .then(msg => {
+                alert(msg);        // show success or error message
+
+                // Reload projects list
                 loadProjects();
+
+                // Reset selection
+                prevEl = null;
+                prevIsCreate = false;
+                cleanForm();
+                activateForm(true);
             })
             .catch(err => {
                 console.error("Delete error:", err);
