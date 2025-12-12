@@ -1,7 +1,4 @@
 (() => {
-    // ===========================
-    // ELEMENTS
-    // ===========================
     const projectNameEl = document.getElementById("projectName");
     const teamSelectEl = document.getElementById("teamSelect");
     const createFormBtn = document.getElementById("create");
@@ -15,10 +12,6 @@
         console.error("Missing DOM elements - check IDs in HTML.");
         return;
     }
-
-    // ===========================
-    // STATE
-    // ===========================
     let prevEl = null;
     let prevIsCreate = false;
     let projects = [];
@@ -31,9 +24,7 @@
         return;
     }
 
-    // ===========================
     // HELPERS
-    // ===========================
     function activateForm(isDisabled) {
         projectNameEl.disabled = isDisabled;
         teamSelectEl.disabled = isDisabled;

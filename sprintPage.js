@@ -1,7 +1,4 @@
 (() => {
-    // ===========================
-    // ELEMENTS
-    // ===========================
     const sprintListEl = document.getElementById("sprint_list");
     const startDateEl = document.getElementById("startDate");
     const endDateEl = document.getElementById("endDate");
@@ -16,9 +13,6 @@
         return;
     }
 
-    // ===========================
-    // STATE
-    // ===========================
     let prevEl = null;
     let prevIsCreate = false;
     let sprints = [];
@@ -32,9 +26,6 @@
     const projectId = project.projectId;
     const courseId = project.courseId;
 
-    // ===========================
-    // HELPERS
-    // ===========================
     function activateForm(isDisabled) {
         startDateEl.disabled = isDisabled;
         endDateEl.disabled = isDisabled;

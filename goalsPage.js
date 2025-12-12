@@ -1,7 +1,4 @@
 (() => {
-    // ===========================
-    // ELEMENTS
-    // ===========================
     const goalListEl = document.getElementById("goal_list");
     const descriptionEl = document.getElementById("description");
     const scoreEl = document.getElementById("score");
@@ -17,9 +14,6 @@
         return;
     }
 
-    // ===========================
-    // STATE
-    // ===========================
     let prevEl = null;
     let prevIsCreate = false;
     let goals = [];
@@ -34,9 +28,6 @@
     const projectId = sprint.projectId;
     const courseId = sprint.courseId;
 
-    // ===========================
-    // HELPERS
-    // ===========================
     function activateForm(isDisabled) {
         descriptionEl.disabled = isDisabled;
         scoreEl.disabled = isDisabled;
