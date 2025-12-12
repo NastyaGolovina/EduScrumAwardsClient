@@ -172,7 +172,8 @@
     createFormBtn.addEventListener("click", () => {
         prevIsCreate = true;
         cleanForm();
-        activateForm(false);
+        activateForm(false);      // enable project name
+        teamSelectEl.disabled = false; // enable team select
         removeBtn();
         createBtn("Create");
     });
@@ -181,7 +182,8 @@
         if (!prevEl) return showError("Select a project");
 
         prevIsCreate = false;
-        activateForm(false);
+        activateForm(false);        // enable project name
+        teamSelectEl.disabled = true; // keep team select disabled
         removeBtn();
         createBtn("Update");
 
