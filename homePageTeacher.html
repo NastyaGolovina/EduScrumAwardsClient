@@ -14,7 +14,7 @@
 
     <body>
 
-    <header class="bg-primary p-3 mb-3 border-bottom">
+    <header class="bg-primary p-3 mb-3 border-bottom fixed-top">
         <div class="container-fluid">
             <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
                 <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
@@ -51,7 +51,7 @@
             </div>
         </div>
     </header>
-    <div class="alert alert-danger alert-dismissible fade show" id="errorMsg" role="alert" style="display: none">
+    <div class="alert alert-danger alert-dismissible fade show fixed-top "  id="errorMsg" role="alert" style="display: none; margin-top: 80px;">
         <p class="m-0" id="errorMsgText">Something went wrong</p>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
@@ -119,6 +119,36 @@
                 </div>
             </div>
         </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="my-3 bg-body rounded shadow-sm"
+                 style="min-height: 100px; max-height: 250px; overflow-y: auto; position: relative;">
+
+                <div style="position: sticky; top: 0; background: white; z-index: 100; border-bottom: 1px solid #dee2e6;"
+                     class="p-3">
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="course" class="form-label m-0">Course</label>
+                            <select class="form-select" id="course" name="course" required>
+                                <option value="">Choose...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="position: sticky; top: 0; background: white; z-index: 100; border-bottom: 1px solid #dee2e6;"
+                     class="p-3">
+                    <h6 class="mb-0">Projects Progress</h6>
+                </div>
+
+                <div class="p-3 " id="top_team_per_course">
+
+
+                </div>
+            </div>
+        </div>
+    </div>
     </div>
 
     <script src="homeTeacher.js"></script>

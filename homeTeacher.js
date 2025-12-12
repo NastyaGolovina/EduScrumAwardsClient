@@ -1,6 +1,8 @@
 const studentsTopEl = document.getElementById("students_top");
 const teamTopEl = document.getElementById("team_top");
 const projectProgressEl = document.getElementById("project_progress");
+const teamTopPerCourseEl = document.getElementById("top_team_per_course");
+const courseEl = document.getElementById("course");
 // const colors = ["#e83e8c", "#6f42c1", "#007bff"];
 const colors = [
     "#e83e8c",
@@ -12,6 +14,14 @@ const colors = [
     "#17a2b8",
     "#dc3545"
 ];
+
+function addOptions(parentEl, value, text) {
+    const optionEl = document.createElement("option");
+    optionEl.value = value;
+    optionEl.innerText = text;
+    parentEl.appendChild(optionEl);
+
+}
 
 
 function createSVG() {
@@ -94,7 +104,7 @@ function addEntity(El, name, pointValue, number) {
     const strongPointsEl = document.createElement("strong");
 
     pPointsEl.className = "pb-3 mb-0 small lh-sm border-bottom ms-auto"
-    strongPointsEl.strongPointsEl = "d-block text-gray-dark"
+    strongPointsEl.className = "d-block text-gray-dark"
     strongEl.className = "d-block text-gray-dark"
     pNameEl.className = "pb-3 mb-0 small lh-sm border-bottom flex-grow-1";
     divEl.className = "d-flex text-body-secondary pt-3"
@@ -147,6 +157,9 @@ function setErrorMsg(errorMsg) {
 }
 
 function fillTop(points,el) {
+    while (el.firstChild) {
+        el.removeChild(el.firstChild);
+    }
     for(let i = 0 ; i < points.length;i++) {
         addEntity(el, points[i].name, points[i].points, points[i].studentNumber)
     }
@@ -162,15 +175,49 @@ Promise.all([
     fetch("http://localhost:8080/dashboard/students/points").then(r => r.json()),
     fetch("http://localhost:8080/dashboard/teams/points").then(r => r.json()),
     fetch("http://localhost:8080/dashboard/projects/progress").then(r => r.json()),
-]).then(([students_points, teams_points,projects_progress]) => {
+    fetch("http://localhost:8080/Courses/all").then(r => r.json()),
+]).then(([students_points, teams_points,projects_progress,courses]) => {
     //
     console.log(students_points);
     console.log(teams_points);
     console.log(projects_progress);
+    console.log(courses);
 
     fillTop(students_points,studentsTopEl);
     fillTop(teams_points,teamTopEl);
     fillProgress(projects_progress);
+
+    for(let s = 0 ; s < courses.length; s++) {
+        addOptions(courseEl, courses[s].courseID,  courses[s].courseName);
+    }
+
+
+    document.addEventListener('change', event => {
+        if(event.target.id === 'course') {
+            const courseID = event.target.value;
+            // console.log(courseID);
+            if(courseID !== "") {
+                fetch(`http://localhost:8080/dashboard/teams/points/${courseID}`)
+                    .then((response) => {
+                        return response.json();
+
+                    })
+                    .then((result) => {
+                        console.log(result);
+                        fillTop(result,teamTopPerCourseEl);
+
+                    }).catch(error => {
+                        console.log(error);
+                        setErrorMsg(error);
+                });
+
+            } else {
+                while (teamTopPerCourseEl.firstChild) {
+                    teamTopPerCourseEl.removeChild(teamTopPerCourseEl.firstChild);
+                }
+            }
+        }
+    });
 
 
 
