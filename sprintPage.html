@@ -54,13 +54,13 @@
                 <button type="button" id="create" class="btn btn-outline-primary">Create</button>
                 <button type="button" id="update" class="btn btn-outline-primary">Update</button>
                 <button type="button" id="delete" class="btn btn-outline-primary">Delete</button>
-
             </div>
 
             <a href="goalPage.html" id="goalsPage" class="btn btn-outline-primary">Goals</a>
 
+            <!-- Dynamic Project Name Section -->
             <div class="mt-3 container">
-                <h4 class="mb-3">Sprint Details</h4>
+                <h4 class="mb-3" id="projectNameDisplay"></h4> <!-- Project name will be inserted here -->
                 <form class="needs-validation">
                     <div class="row g-3">
                         <div class="col-sm-6">
@@ -81,5 +81,21 @@
 </div>
 
 <script src="sprintPage.js"></script>
+
+
+<script>
+    // Display project name dynamically at the top of the page
+    document.addEventListener('DOMContentLoaded', () => {
+        const project = JSON.parse(localStorage.getItem('project'));
+        const projectNameEl = document.getElementById('projectNameDisplay'); // <-- match ID
+
+        if (project && project.projectName) {
+            projectNameEl.innerText = `Project: ${project.projectName}`;
+        } else {
+            projectNameEl.innerText = "Project not selected.";
+        }
+    });
+</script>
+
 </body>
 </html>

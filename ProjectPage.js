@@ -9,8 +9,9 @@
     const deleteFormBtn = document.getElementById("delete");
     const listEl = document.getElementById("project_list");
     const formEl = document.getElementsByTagName("form")[0];
+    const sprintsBtn = document.getElementById("sprintsPage");
 
-    if (!listEl || !projectNameEl || !teamSelectEl || !formEl) {
+    if (!listEl || !projectNameEl || !teamSelectEl || !formEl || !sprintsBtn) {
         console.error("Missing DOM elements - check IDs in HTML.");
         return;
     }
@@ -39,7 +40,6 @@
     function fillForm(project) {
         if (!project) return;
         projectNameEl.value = project.projectName ?? "";
-        // project.team may be null; guard:
         teamSelectEl.value = project.team?.teamID ?? "";
     }
 
@@ -62,7 +62,6 @@
     }
 
     function showError(msg) {
-        // you can replace with nicer UI, for now alert
         alert(msg);
     }
 
@@ -71,13 +70,9 @@
     // ===========================
     function loadTeams() {
         fetch("http://localhost:8080/team/all")
-            .then(r => {
-                if (!r.ok) throw new Error("Teams fetch failed: " + r.status);
-                return r.json();
-            })
+            .then(r => r.ok ? r.json() : Promise.reject("Teams fetch failed"))
             .then(result => {
                 teams = result || [];
-                // keep default option
                 teamSelectEl.innerHTML = '<option value="">--Select Team--</option>';
                 teams.forEach(t => {
                     const opt = document.createElement("option");
@@ -86,10 +81,7 @@
                     teamSelectEl.appendChild(opt);
                 });
             })
-            .catch(err => {
-                console.error("Error loading teams:", err);
-                // still let user continue (they may create without team)
-            });
+            .catch(err => console.error("Error loading teams:", err));
     }
 
     // ===========================
@@ -100,17 +92,12 @@
 
     if (!courseId) {
         alert("No course selected. Please select a course first.");
-        // Optionally: redirect to courses page:
-        // window.location.href = "coursePage.html";
         return;
     }
 
     function loadProjects() {
         fetch(`http://localhost:8080/courses/${courseId}/projects`)
-            .then(r => {
-                if (!r.ok) throw new Error("Projects fetch failed: " + r.status);
-                return r.json();
-            })
+            .then(r => r.ok ? r.json() : Promise.reject("Projects fetch failed"))
             .then(result => {
                 projects = result || [];
                 listEl.innerHTML = "";
@@ -118,7 +105,6 @@
                 projects.forEach((p, i) => {
                     const a = document.createElement("a");
                     a.className = "list-group-item list-group-item-action py-3 lh-sm";
-                    // use standard data attr
                     a.dataset.projectId = p.projectId;
                     a.innerHTML = `<div><strong>${p.projectName}</strong></div>`;
                     listEl.appendChild(a);
@@ -128,10 +114,16 @@
                         a.classList.add("active");
                         fillForm(p);
                         activateForm(true);
+
+                        // Store first project in localStorage
+                        localStorage.setItem("project", JSON.stringify({
+                            projectId: p.projectId,
+                            courseId: courseId,
+                            projectName: p.projectName
+                        }));
                     }
                 });
 
-                // If no projects, show placeholder
                 if (projects.length === 0) {
                     listEl.innerHTML = '<div class="list-group-item">No projects found for this course.</div>';
                     activateForm(true);
@@ -140,7 +132,7 @@
             })
             .catch(err => {
                 console.error("Error loading projects:", err);
-                showError("Failed to load projects. See console for details.");
+                showError("Failed to load projects. See console.");
             });
     }
 
@@ -148,15 +140,12 @@
     loadProjects();
 
     // ===========================
-    // LIST CLICK (safe walk)
+    // LIST CLICK
     // ===========================
     listEl.addEventListener("click", e => {
         let el = e.target;
-        // walk up safely
-        while (el && !el.classList.contains("list-group-item")) {
-            el = el.parentNode;
-        }
-        if (!el || !el.dataset.projectId) return; // clicked outside an item
+        while (el && !el.classList.contains("list-group-item")) el = el.parentNode;
+        if (!el || !el.dataset.projectId) return;
 
         removeActive();
         prevEl = el;
@@ -168,10 +157,17 @@
         fillForm(project);
         activateForm(true);
         removeBtn();
+
+        // Update localStorage when user clicks a project
+        localStorage.setItem("project", JSON.stringify({
+            projectId: project.projectId,
+            courseId: courseId,
+            projectName: project.projectName
+        }));
     });
 
     // ===========================
-    // CREATE
+    // CREATE / UPDATE / DELETE BUTTONS
     // ===========================
     createFormBtn.addEventListener("click", () => {
         prevIsCreate = true;
@@ -181,9 +177,6 @@
         createBtn("Create");
     });
 
-    // ===========================
-    // UPDATE
-    // ===========================
     updateFormBtn.addEventListener("click", () => {
         if (!prevEl) return showError("Select a project");
 
@@ -192,27 +185,21 @@
         removeBtn();
         createBtn("Update");
 
-        const id = Number(prevEl.dataset.projectId);
-        const project = projects.find(p => p.projectId === id);
+        const projectId = Number(prevEl.dataset.projectId);
+        const project = projects.find(p => p.projectId === projectId);
         fillForm(project);
     });
 
-    // ===========================
-    // DELETE
-    // ===========================
     deleteFormBtn.addEventListener("click", () => {
         if (!prevEl) return showError("Select a project");
-
         if (!confirm("Delete this project?")) return;
 
         const projectId = prevEl.dataset.projectId;
         fetch(`http://localhost:8080/courses/${courseId}/projects/${projectId}/delete`, { method: "DELETE" })
             .then(r => r.text())
             .then(result => {
-                if (result.includes("Success")) {
-                    // remove from local list and re-render
-                    loadProjects();
-                } else showError(result);
+                if (result.includes("Success")) loadProjects();
+                else showError(result);
             })
             .catch(err => {
                 console.error("Delete error:", err);
@@ -220,21 +207,24 @@
             });
     });
 
-    // Sprints page navigation
-    document.getElementById("sprintsPage").addEventListener("click", (event) => {
+    // ===========================
+    // SPRINTS PAGE NAVIGATION
+    // ===========================
+    sprintsBtn.addEventListener("click", (event) => {
         event.preventDefault();
 
-        if (prevEl != null) {
-            // Store selected project in localStorage
+        if (!prevEl && projects.length > 0) {
+            prevEl = listEl.querySelector("a.list-group-item");
+        }
+
+        if (prevEl) {
             const project = {
-                projectId: +prevEl.dataset.projectId,  // numeric project ID
-                courseId: courseId,                    // courseId should be available from earlier code
-                projectName: prevEl.querySelector('strong').innerText
+                projectId: +prevEl.dataset.projectId,
+                courseId: courseId,
+                projectName: prevEl.querySelector("strong").innerText
             };
 
             localStorage.setItem("project", JSON.stringify(project));
-
-            // Navigate to sprint page
             window.location.href = "sprintPage.html";
         } else {
             alert("You didn't choose any project.");
@@ -257,7 +247,6 @@
         formData.append("projectName", name);
         formData.append("teamId", String(teamId));
 
-        // CREATE
         if (prevIsCreate) {
             fetch(`http://localhost:8080/courses/${courseId}/projects/create`, { method: "POST", body: formData })
                 .then(r => r.text())
@@ -269,18 +258,14 @@
                     console.error("Create error:", err);
                     showError("Create failed. See console.");
                 });
-        }
-        // UPDATE
-        else {
+        } else {
             if (!prevEl) return showError("Select a project to update");
             const projectId = prevEl.dataset.projectId;
             formData.append("projectId", projectId);
 
-            fetch(`http://localhost:8080/courses/${course.id}/projects/${projectId}/update`, {
+            fetch(`http://localhost:8080/courses/${courseId}/projects/${projectId}/update`, {
                 method: "PUT",
-                headers: {
-                    "Accept": "text/plain"
-                },
+                headers: { "Accept": "text/plain" },
                 body: formData
             })
                 .then(r => r.text())
