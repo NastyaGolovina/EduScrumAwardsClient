@@ -182,6 +182,23 @@ fetch("http://localhost:8080/Courses/all")
       }
     });
 
+    document.getElementById("projectsPage").addEventListener("click", (event) => {
+      event.preventDefault();
+
+      if (prevEl != null) {
+        const course = {
+          id: +prevEl.dataset.CourseId,
+          name: prevEl.querySelector('strong').innerText
+        };
+
+        localStorage.setItem("course", JSON.stringify(course));
+        window.location.href = "projectPage.html";
+      } else {
+        alert("You didn't choose any course.");
+      }
+    });
+
+
     listEl.addEventListener('click', event => {
       prevIsCreate = false;
       removeErrorMassage();
