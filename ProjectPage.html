@@ -54,17 +54,15 @@
                 <button type="button" id="create" class="btn btn-outline-primary">Create</button>
                 <button type="button" id="update" class="btn btn-outline-primary">Update</button>
                 <button type="button" id="delete" class="btn btn-outline-primary">Delete</button>
-
             </div>
 
             <a href="sprintPage.html" id="sprintsPage" class="btn btn-outline-primary">Sprints</a>
 
-
+            <!-- Dynamic Course Name Section -->
             <div class="mt-3 container">
-                <h4 class="mb-3">Project</h4>
+                <h4 class="mb-3" id="courseName"></h4> <!-- Course name will be inserted here -->
                 <form class="needs-validation">
                     <div class="row g-3">
-
                         <div class="col-sm-12">
                             <label for="projectName" class="form-label">Project Name</label>
                             <input type="text" class="form-control" id="projectName" required disabled>
@@ -77,7 +75,6 @@
                                 <!-- Teams will be populated here -->
                             </select>
                         </div>
-
                     </div>
                     <hr class="my-4">
                 </form>
@@ -87,5 +84,18 @@
 </div>
 
 <script src="ProjectPage.js"></script>
+<script>
+    // JavaScript to display course name dynamically at the top of the page
+    document.addEventListener('DOMContentLoaded', () => {
+        const course = JSON.parse(localStorage.getItem('course'));
+        const courseNameEl = document.getElementById('courseName');
+
+        if (course && course.name) {
+            courseNameEl.innerText = `Course: ${course.name}`;
+        } else {
+            courseNameEl.innerText = "Course not selected.";
+        }
+    });
+</script>
 </body>
 </html>
