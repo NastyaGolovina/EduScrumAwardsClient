@@ -65,11 +65,14 @@
     }
 
     // ===========================
-    // LOAD SPRINTS
+    // LOAD SPRINTS (with r.ok check)
     // ===========================
     function loadSprints() {
         fetch(`http://localhost:8080/courses/${courseId}/projects/${projectId}/sprints`)
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) return r.text().then(t => Promise.reject(t || `Failed to load sprints: ${r.status}`));
+                return r.json();
+            })
             .then(result => {
                 sprints = result || [];
                 sprintListEl.innerHTML = "";
@@ -97,7 +100,7 @@
             })
             .catch(err => {
                 console.error("Error loading sprints:", err);
-                showError("Failed to load sprints.");
+                showError(typeof err === "string" ? err : "Failed to load sprints.");
             });
     }
 
@@ -147,52 +150,63 @@
         if (!confirm("Delete this sprint?")) return;
 
         const sprintId = prevEl.dataset.sprintId;
+        // capture response text and status so we can show backend message regardless
         fetch(`http://localhost:8080/courses/${courseId}/projects/${projectId}/sprints/${sprintId}/delete`, {
             method: "DELETE"
         })
-            .then(r => {
-                if (!r.ok) throw new Error(`Delete failed: ${r.status}`);
-                return r.text();
-            })
-            .then(result => {
-                // Clear the previous selection
-                prevEl = null;
-                prevIsCreate = false;
-
-                // Reload sprint list
-                loadSprints();
+            .then(r => r.text().then(text => ({ ok: r.ok, text })))
+            .then(({ ok, text }) => {
+                // show backend message (either success or informative error)
+                alert(text || (ok ? "Deleted" : "Delete failed"));
+                if (ok) {
+                    prevEl = null;
+                    prevIsCreate = false;
+                    loadSprints();
+                }
             })
             .catch(err => {
                 console.error("Delete error:", err);
-                showError("Delete failed.");
+                showError("Delete failed. See console.");
             });
     });
 
     // ===========================
-    // SUBMIT CREATE / UPDATE
+    // SUBMIT CREATE / UPDATE (with date check and showing backend message)
     // ===========================
     document.addEventListener("click", e => {
         if (e.target.id !== "btn-submit") return;
 
-        const startDate = startDateEl.value;
-        const endDate = endDateEl.value;
+        const startDate = startDateEl.value && startDateEl.value.trim();
+        const endDate = endDateEl.value && endDateEl.value.trim();
         if (!startDate || !endDate) return showError("Start and End dates required");
+
+        // client-side date sanity check
+        const sd = new Date(startDate);
+        const ed = new Date(endDate);
+        if (isNaN(sd.getTime()) || isNaN(ed.getTime())) return showError("Invalid date format");
+        if (sd > ed) return showError("Start date must be before or equal to End date");
 
         const formData = new URLSearchParams();
         formData.append("startDate", startDate);
         formData.append("endDate", endDate);
 
+        const urlBase = `http://localhost:8080/courses/${courseId}/projects/${projectId}/sprints`;
+
         if (prevIsCreate) {
             // CREATE
-            fetch(`http://localhost:8080/courses/${courseId}/projects/${projectId}/sprints/create`, {
+            fetch(`${urlBase}/create`, {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: formData
             })
-                .then(r => r.text())
-                .then(result => {
-                    if (result.includes("Success")) loadSprints();
-                    else showError(result);
+                .then(r => r.text().then(text => ({ ok: r.ok, text })))
+                .then(({ ok, text }) => {
+                    alert(text || (ok ? "Created" : "Create failed"));
+                    if (ok) {
+                        loadSprints();
+                        removeBtn();
+                        activateForm(true);
+                    }
                 })
                 .catch(err => {
                     console.error("Create error:", err);
@@ -201,24 +215,25 @@
         } else {
             // UPDATE
             const sprintId = prevEl.dataset.sprintId;
-            fetch(`http://localhost:8080/courses/${courseId}/projects/${projectId}/sprints/${sprintId}/update`, {
+            fetch(`${urlBase}/${sprintId}/update`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: formData
             })
-                .then(r => r.text())
-                .then(result => {
-                    if (result.includes("Success")) loadSprints();
-                    else showError(result);
+                .then(r => r.text().then(text => ({ ok: r.ok, text })))
+                .then(({ ok, text }) => {
+                    alert(text || (ok ? "Updated" : "Update failed"));
+                    if (ok) {
+                        loadSprints();
+                        removeBtn();
+                        activateForm(true);
+                    }
                 })
                 .catch(err => {
                     console.error("Update error:", err);
                     showError("Update failed.");
                 });
         }
-
-        removeBtn();
-        activateForm(true);
     });
 
     // ===========================
