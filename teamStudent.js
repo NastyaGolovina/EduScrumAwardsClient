@@ -6,8 +6,18 @@ const teamMembersBtn = document.getElementById("teamMembers");
 const listEl = document.getElementById("team_list");
 const formEl = document.getElementsByTagName("form")[0];
 
+const lsObj = localStorage.getItem("user") || localStorage.getItem("currentUser");
+if (!lsObj) {
+  alert("Not logged in");
+  window.location.href = "login.html";
+}
+const student = JSON.parse(lsObj);
+const studentId = student.id;
+
 let prevEl = null;
 let prevIsCreate = false;
+
+let teams = [];
 
 function activateDeactivatedForm(isDisabled) {
     teamNameEl.disabled = isDisabled;
@@ -21,10 +31,10 @@ function fillInputEl(name) {
     teamNameEl.value = name;
 }
 
-function fillForm(currentEl, teams) {
-    for (let i = 0; i < teams.length; i++) {
-        if (teams[i].teamID === +currentEl.dataset.TeamId) {
-            fillInputEl(teams[i].teamName);
+function fillForm(currentEl, teamsArr) {
+    for (let i = 0; i < teamsArr.length; i++) {
+        if (teamsArr[i].teamID === +currentEl.dataset.TeamId) {
+            fillInputEl(teamsArr[i].teamName);
         }
     }
 }
@@ -86,22 +96,42 @@ function setErrorMsg(errorMsg) {
 }
 
 fetch("http://localhost:8080/team/all")
-    .then((response) => {
-        return response.json();
-    })
-    .then((result) => {
-        console.log(result);
-        let teams = result;
+  .then(res => res.json())
+  .then(async (allTeams) => {
+    listEl.innerHTML = "";
+    prevEl = null;
+    teams = [];
 
-        // fill team list
-        for (let i = 0; i < teams.length; i++) {
-            addElInList(teams[i].teamID, teams[i].teamName, i);
-        }
+    for (const team of (allTeams || [])) {
+      const members = await fetch(`http://localhost:8080/team-member/all/${team.teamID}`)
+        .then(r => r.json())
+        .catch(() => []);
 
-        // fill form with first team
-             if (teams.length > 0 && prevEl !== null) {
-                    fillForm(prevEl, teams);
-             }
+      //ex Tina is member if member.student.userId matches logged-in student's id
+      const isMember = Array.isArray(members) && members.some(m =>
+        m.student && Number(m.student.userId) === Number(studentId)
+      );
+
+      if (isMember) {
+        teams.push(team);
+        addElInList(team.teamID, team.teamName, teams.length - 1);
+      }
+    }
+
+    if (teams.length > 0) {
+      prevEl = listEl.children[0];
+      prevEl.classList.add("active");
+      fillForm(prevEl, teams);
+      activateDeactivatedForm(true);
+    } else {
+      cleanInputEl();
+      activateDeactivatedForm(true);
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    setErrorMsg("Failed to load teams");
+  });
 
              createFormBtn.addEventListener("click", (event) => {
                          prevIsCreate = true;
@@ -204,7 +234,7 @@ fetch("http://localhost:8080/team/all")
               localStorage.setItem("team", JSON.stringify(team));
               window.location.href = teamMembersBtn.href;
               } else {
-              alert("You didn't choose any team.");
+              alert("You didn't choose any team/You are not yet belong to any team.");
               }
               });
 
@@ -277,7 +307,3 @@ fetch("http://localhost:8080/team/all")
                               }
                           }
                       });
-                  })
-                  .catch((error) => {
-                      setErrorMsg(error);
-                  });
