@@ -22,8 +22,7 @@ const colors = [
 
 const lsObj = localStorage.getItem("user");
 let student = JSON.parse(lsObj);
-// let studentId =  student.id;
-let studentId =  1;
+let studentId =  student.id;
 
 
 
