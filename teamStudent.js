@@ -259,25 +259,53 @@ fetch("http://localhost:8080/team/all")
                                       return;
                                   }
 
-                                  if (event.target.innerText === "Create") {
-                                      const formDataCreate = new FormData();
-                                      formDataCreate.append("teamName", name);
+                                       if (event.target.innerText === "Create") {
+                                        const formDataCreate = new FormData();
+                                        formDataCreate.append("teamName", name);
 
-                                      fetch("http://localhost:8080/team/create", {
-                                          method: "POST",
-                                          body: formDataCreate,
-                                      })
-                                          .then((response) => response.text())
-                                          .then((result) => {
-                                              console.log("Server response:", result);
-                                              if (result.includes("Success")) {
-                                                  window.location.reload();
-                                              } else if (result.includes("ERROR")) {
-                                                  setErrorMsg(result);
-                                              }
-                                          })
-                                          .catch((err) => console.error(err));
-                                  } else if (event.target.innerText === "Update") {
+                                        // Create team
+                                        fetch("http://localhost:8080/team/create", {
+                                            method: "POST",
+                                            body: formDataCreate,
+                                        })
+                                            .then(res => res.text())
+                                            .then(async result => {
+                                                if (!result.includes("Success")) {
+                                                    setErrorMsg(result);
+                                                    return;
+                                                }
+
+                                                // Get all teams to find the newly created one
+                                                const allTeams = await fetch("http://localhost:8080/team/all")
+                                                    .then(r => r.json());
+
+                                                const createdTeam = allTeams.find(t => t.teamName === name);
+
+                                                if (!createdTeam) {
+                                                    setErrorMsg("Team created but not found");
+                                                    return;
+                                                }
+
+                                                // Auto-add creator as SCRUM_MASTER
+                                                const joinData = new FormData();
+                                                joinData.append("teamId", createdTeam.teamID);
+                                                joinData.append("studentId", studentId);
+                                                joinData.append("role", "SCRUM_MASTER");
+
+                                                await fetch("http://localhost:8080/team-member/create", {
+                                                    method: "POST",
+                                                    body: joinData,
+                                                });
+
+                                                // 4️⃣ Reload page → team now appears in list
+                                                window.location.reload();
+                                            })
+                                            .catch(err => {
+                                                console.error(err);
+                                                setErrorMsg("Failed to create team");
+                                            });
+                                    }
+                                  else if (event.target.innerText === "Update") {
                                       if (prevEl != null) {
                                           const formDataUpdate = new FormData();
                                           formDataUpdate.append("teamId", +prevEl.dataset.TeamId);
